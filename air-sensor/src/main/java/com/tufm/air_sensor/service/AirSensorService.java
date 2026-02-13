@@ -1,5 +1,6 @@
 package com.tufm.air_sensor.service;
 
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -8,6 +9,13 @@ import java.util.Random;
 @Service
 public class AirSensorService {
     private final Random random = new Random();
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    // Constructor para que Spring nos de el KafkaTemplate listo para usar
+    public AirSensorService(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
     @Scheduled(fixedRate = 5000)
     public void simularMedicion() {
 
@@ -31,7 +39,9 @@ public class AirSensorService {
 
                 System.out.println("⚠️ ALERTA: VALORES CRÍTICOS DETECTADOS");
             }
-
+        String mensaje = String.format("SensorID: 1 | Temp: %.2f | CO2: %.2f", temperatura, co2);
+        kafkaTemplate.send("mediciones-aire", mensaje);
+        System.out.println("Mensaje enviado a Kafka: " + mensaje);
             System.out.printf("Sensor activo -> Temp: %.2f ºC | CO2: %.2f ppm%n", temperatura, co2);
         }
 
