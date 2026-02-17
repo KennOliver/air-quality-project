@@ -28,8 +28,24 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: air_quality_db
+      TZ: Europe/Madrid
     volumes:
       - mysql_data:/var/lib/mysql
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_container
+    ports:
+      - "3000:3000"
+    volumes:
+      # Inyecto el archivo de configuración dentro del contenedor
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - TZ=Europe/Madrid
+    depends_on:
+      - mysql
 
 volumes:
   mysql_data:
