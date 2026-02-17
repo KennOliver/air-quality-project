@@ -1,7 +1,31 @@
-version: '3'
+version: '3.8'
+
 services:
+  airsensor:
+    build: ./air-sensor
+    container_name: airsensor
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+
+  centralsystem:
+    build: ./central-system
+    container_name: centralsystem
+    ports:
+      - "8080:8080"
+    depends_on:
+      - kafka
+      - mysql
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/air_quality_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Europe/Madrid
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -10,6 +34,7 @@ services:
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -17,7 +42,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   mysql:
@@ -38,7 +63,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      # Inyecto el archivo de configuración dentro del contenedor
       - ./docker/grafana/provisioning:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -46,6 +70,7 @@ services:
       - TZ=Europe/Madrid
     depends_on:
       - mysql
+
 
 volumes:
   mysql_data:
