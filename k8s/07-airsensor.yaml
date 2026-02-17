@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airsensor
+  namespace: air-quality
+spec:
+  replicas: 1 # ¡Luego probaremos a poner 10 aquí!
+  selector:
+    matchLabels:
+      app: airsensor
+  template:
+    metadata:
+      labels:
+        app: airsensor
+    spec:
+      containers:
+      - name: airsensor
+
+        image: air-quality-project-airsensor:latest
+        imagePullPolicy: Never
+        env:
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"

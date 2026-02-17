@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: air-quality
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate # Importante para BBDD: Si se actualiza, apaga el viejo antes de encender el nuevo para no corromper datos.
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0 # La misma versión que en Docker Compose
+        env:
+        # Aquí conectamos con el SECRETO que creaste antes
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        - name: MYSQL_DATABASE
+          value: air_quality_db
+        - name: TZ
+          value: Europe/Madrid
+        ports:
+        - containerPort: 3306
+          name: mysql
+        # Aquí conectamos el DISCO (PVC)
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+
+---
+# Esto es el SERVICIO: Permite que otros (como Java) encuentren a MySQL llamándolo por su nombre "mysql"
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: air-quality
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None # Headless service (opcional, pero bueno para BBDD internas)

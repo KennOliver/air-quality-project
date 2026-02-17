@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc        # El nombre de nuestra "reserva de disco"
+  namespace: air-quality # ¡Importante! Todo en el mismo barrio
+spec:
+  accessModes:
+    - ReadWriteOnce      # Solo un nodo puede escribir a la vez (típico para BBDD)
+  resources:
+    requests:
+      storage: 1Gi       # Reservamos 1GB (suficiente para nuestros sensores)

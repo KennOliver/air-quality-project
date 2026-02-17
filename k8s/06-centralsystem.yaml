@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: centralsystem
+  namespace: air-quality
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: centralsystem
+  template:
+    metadata:
+      labels:
+        app: centralsystem
+    spec:
+      containers:
+      - name: centralsystem
+        # ⚠️ ASEGÚRATE DE QUE ESTE NOMBRE COINCIDE CON TU 'docker images'
+        image: air-quality-project-centralsystem:latest
+        imagePullPolicy: Never # Importante: Obliga a usar la imagen local, no intenta bajarla de internet
+        ports:
+        - containerPort: 8080
+        env:
+        # Configuración de MySQL
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql:3306/air_quality_db?allowPublicKeyRetrieval=true&useSSL=false"
+        - name: SERVER_PORT
+          value: "8080"
+        - name: SERVER_ADDRESS
+          value: "0.0.0.0"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "root"
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        # Configuración de Kafka
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+
+---
+# Servicio para poder ver la API desde fuera (Postman / Navegador)
+apiVersion: v1
+kind: Service
+metadata:
+  name: centralsystem
+  namespace: air-quality
+spec:
+  type: LoadBalancer # En Docker Desktop, esto expone el puerto en localhost
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: centralsystem
